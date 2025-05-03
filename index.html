@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sunburst Chart + Hierarchy Table</title>
+
+<!-- Load data file first -->
+<script src="avalinteracademicos.js"></script>
+
+<!-- Load D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #fafafa;
+  }
+
+  .container {
+    display: flex;
+    height: 100vh;
+  }
+
+  .chart {
+    flex: 1;
+    padding: 20px;
+  }
+
+  .table-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    border-left: 1px solid #ccc;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+padding: 2px 6px; 
+    text-align: left;
+  }
+
+  th {
+    background: #eee;
+  }
+
+tr:hover {
+    background-color: rgba(0, 0, 0, 0.05);  /* works for white rows */
+}
+
+tr.top-level:hover {
+    background-color: unset; /* remove background-color for colored rows */
+    filter: brightness(0.85); /* darken them via filter */
+}
+
+  .dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  .tooltip {
+    position: absolute;
+    padding: 8px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 12px;
+    visibility: hidden;
+  }
+  
+  
+.page-header {
+    background-color: #444;
+    color: white;
+    padding: 20px;
+    font-size: 28px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.chart-table-container {
+    display: flex;
+    border: 3px solid #ccc;
+    margin: 20px;
+    background: white;
+}  
+
+path.highlight {
+  filter: brightness(0.6);
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  Pesos da Ficha de Avaliação da Área Interdisciplinar (Programas Acadêmicos)
+</header>
+<div class="chart-table-container">
+  <div class="chart" id="chart"></div>
+  <div class="table-container">
+    <table id="data-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Categoria</th>
+          <th>Peso</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+
+// ------ Chart Code (unchanged from previous) ------
+
+const width = 800;
+const radius = width / 2;
+const donutHole = radius * 0.1;
+
+function computeEffectiveValues(node, accumulatedWeight = 1) {
+    const currentWeight = ('weight' in node) ? node.weight / 100 : 1;
+    const totalWeight = accumulatedWeight * currentWeight;
+
+    if (node.children) {
+        node.children.forEach(child => computeEffectiveValues(child, totalWeight));
+    } else if ('value' in node) {
+        node.effective_value = node.value * totalWeight;
+    }
+}
+
+computeEffectiveValues(data);
+
+const root = d3.hierarchy(data)
+    .sum(d => d.effective_value || 0);
+
+const partition = d3.partition()
+    .size([2 * Math.PI, radius - donutHole])(root);
+
+const topColors = d3.scaleOrdinal()
+  .domain(["Category A", "Category B", "Category C"])
+  .range(["#1268AF", "#F3801B", "#74AF03"]);
+
+root.descendants().forEach(d => {
+    if (d.depth === 0) d.color = "#ccc";
+    else if (d.depth === 1) d.color = topColors(d.data.name);
+    else d.color = d3.color(d.parent.color).brighter(0.25 * (d.depth - 1));
+});
+
+const maxDepth = root.height;
+
+const arc = d3.arc()
+    .startAngle(d => d.x0)
+    .endAngle(d => d.x1)
+    .innerRadius(d => donutHole + (radius - donutHole) * (1 - d.depth / maxDepth))
+    .outerRadius(d => donutHole + (radius - donutHole) * (1 - (d.depth - 1) / maxDepth));
+
+const svg = d3.select("#chart")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", width)
+  .append("g")
+    .attr("transform", `translate(${width / 2},${width / 2})`);
+
+const tooltip = d3.select("#tooltip");
+
+svg.selectAll("path")
+  .data(root.descendants().filter(d => d.depth))
+  .join("path")
+    .attr("d", arc)
+    .attr("fill", d => d.color)
+    .attr("data-id", d => `id-${d.data.label}`)    
+    .style("stroke", "#fff")
+    .style("stroke-width", "1")
+    .on("mousemove", (event, d) => {
+      tooltip.style("visibility", "visible")
+             .style("top", `${event.pageY + 10}px`)
+             .style("left", `${event.pageX + 10}px`)
+             .html(`<strong>${d.data.name}</strong><br>${d.data.info || ""}<br>Peso: ${d.value.toFixed(2)}`);
+    })
+    .on("mouseout", () => {
+      tooltip.style("visibility", "hidden");
+    });
+
+svg.selectAll("text")
+  .data(root.descendants().filter(d => d.depth))
+  .join("text")
+    .attr("x", d => {
+      const angle = (d.x0 + d.x1) / 2;
+      const r = arc.innerRadius()(d) + (arc.outerRadius()(d) - arc.innerRadius()(d)) * 0.85;
+      return Math.cos(angle - Math.PI / 2) * r;
+    })
+    .attr("y", d => {
+      const angle = (d.x0 + d.x1) / 2;
+      const r = arc.innerRadius()(d) + (arc.outerRadius()(d) - arc.innerRadius()(d)) * 0.85;
+      return Math.sin(angle - Math.PI / 2) * r;
+    })
+    .attr("text-anchor", "middle")
+    .attr("alignment-baseline", "middle")
+    .style("font-size", d => `${10 + (3 - d.depth) * 3}px`)
+    .text(d => d.data.label || d.data.name);
+
+// ------ Table generation from hierarchy (correct color and indentation) ------
+
+function flattenForTableInOrder(node, depth = 0) {
+  const rows = [];
+
+  if (depth > 0) {
+    rows.push({
+      depth: depth,
+      label: node.data.label || "",
+      categoria: node.data.name,
+      peso: node.value,
+      color: node.color
+    });
+  }
+
+  if (node.children) {
+    node.children.forEach(child => {
+      rows.push(...flattenForTableInOrder(child, depth + 1));
+    });
+  }
+
+  return rows;
+}
+
+const rows = flattenForTableInOrder(root);
+
+const tbody = d3.select("#data-table tbody");
+
+const formatPeso = d3.format(" 6.3f");
+
+tbody.selectAll("tr")
+  .data(rows)
+  .join("tr")
+    .attr("data-id", d => `id-${d.label}`)
+    .attr("class", d => d.depth === 1 ? "top-level" : null)
+    .attr("style", d => d.depth === 1 ? `background-color:${d.color}; color:white` : "")
+    .html(d => `
+      <td style="padding-left:${d.depth * 20}px; font-size:${d.depth >= 3 ? '12px' : '14px'}">
+        <span class="dot" style="background-color:${d.color}"></span>${d.label}
+      </td>
+      <td style="padding-left:${d.depth * 20}px; font-size:${d.depth >= 3 ? '12px' : '14px'}">
+        ${d.categoria}
+      </td>
+      <td style="font-size:${d.depth >= 3 ? '12px' : '14px'}; text-align:right;">
+        ${formatPeso(d.peso)}
+      </td>
+    `);
+
+
+  
+tbody.selectAll("tr")
+  .on("mouseenter", function() {
+    const id = d3.select(this).attr("data-id");
+    svg.selectAll(`path[data-id="${id}"]`)
+      .classed("highlight", true);
+  })
+  .on("mouseleave", function() {
+    const id = d3.select(this).attr("data-id");
+    svg.selectAll(`path[data-id="${id}"]`)
+      .classed("highlight", false);
+  });
+    
+</script>
+
+</body>
+</html>
