@@ -1,0 +1,8 @@
+
+
+git add .
+git commit -m "Update content"
+git push origin main
+
+If git push asks for a password to this and repeat the push:
+git remote set-url origin git@github.com:rafaeldcsantos/rafaeldcsantos.github.io.git
