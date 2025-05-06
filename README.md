@@ -1,4 +1,4 @@
 # pesos-area-45
-Pesos da Ficha de Avaliação da Área Interdisciplinar
+Pesos da Ficha de Avaliação da Área Interdisciplinar -- agora com outras áreas!
 
-Release 0.1
+Release 0.2 
