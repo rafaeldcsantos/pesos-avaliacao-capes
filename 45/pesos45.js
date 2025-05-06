@@ -54,7 +54,7 @@ const data = {
           children: [
             { name: "Participação de discentes e/ou egressos autores da pós-graduação", label: "2.3.1", value: 25, info: "2.3.1" },
             { name: "Produção intelectual com participação discente e de egressos autores", label: "2.3.2", value: 25, info: "2.3.2" },
-            { name: "Produção estratificada do corpo discente e/ou egresso", label: "2.3.3", value: 50, info: "2.2.3" }
+            { name: "Produção estratificada do corpo discente e/ou egresso", label: "2.3.3", value: 50, info: "2.3.3" }
           ]
         },
         {
