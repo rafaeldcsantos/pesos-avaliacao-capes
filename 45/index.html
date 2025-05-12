@@ -265,10 +265,10 @@ tbody.selectAll("tr")
     .attr("class", d => d.depth === 1 ? "top-level" : null)
     .attr("style", d => d.depth === 1 ? `background-color:${d.color}; color:white` : "")
     .html(d => `
-      <td style="padding-left:${d.depth * 20}px; font-size:${d.depth >= 3 ? '12px' : '14px'}">
+      <td style="padding-left:${d.depth * 6}px; font-size:${d.depth >= 3 ? '12px' : '14px'}">
         <span class="dot" style="background-color:${d.color}"></span>${d.label}
       </td>
-      <td style="padding-left:${d.depth * 20}px; font-size:${d.depth >= 3 ? '12px' : '14px'}">
+      <td style="padding-left:${d.depth * 6}px; font-size:${d.depth >= 3 ? '12px' : '14px'}">
         ${d.categoria}
       </td>
       <td style="font-size:${d.depth >= 3 ? '12px' : '14px'}; text-align:right;">
