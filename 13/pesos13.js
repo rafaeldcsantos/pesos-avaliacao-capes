@@ -5,7 +5,7 @@ const data = {
   info: "Categorias",
   children: [
     {
-      name: "Programa", label: "1", weight: 100/3, info: "1",
+      name: "Programa", label: "1", weight: 100, info: "1",
       children: [
         {
           name: "Identidade e Condições de Funcionamento", label: "1.1", weight: 50, info: "1.1",
@@ -35,7 +35,7 @@ const data = {
       ]
     },
     {
-      name: "Formação e Produção Intelectual", label: "2", weight: 100/3, info: "2",
+      name: "Formação e Produção Intelectual", label: "2", weight: 100, info: "2",
       children: [
         {
           name: "Qualidade de Teses e Dissertações, adequação às áreas e linhas do programa", label: "2.1", weight: 25, info: "2.1",
@@ -72,7 +72,7 @@ const data = {
       ]
     },
     {
-      name: "Impacto (Local, Regional, Nacional, Internacional)", label: "3", weight: 100/3, info: "3",
+      name: "Impacto (Local, Regional, Nacional, Internacional)", label: "3", weight: 100, info: "3",
       children: [
         {
           name: "Inserção, Visibilidade, Popularização da Ciência", label: "3.1", weight: 35, info: "3.1",
